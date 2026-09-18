@@ -257,9 +257,9 @@
     stepBtn: document.getElementById("stepBtn"),
     checkBtn: document.getElementById("checkBtn"),
     indentBtn: document.getElementById("indentBtn"),
-    indentChip: document.getElementById("indentChip"),
     resetBtn: document.getElementById("resetBtn"),
     speed: document.getElementById("speed"),
+    editorDock: document.getElementById("editorDock"),
     completionsBar: document.getElementById("completionsBar"),
     completions: document.getElementById("completions"),
     console: document.getElementById("console"),
@@ -1068,10 +1068,18 @@
     els.code.focus();
   }
 
-  els.indentBtn.addEventListener("click", function () {
+  els.indentBtn.addEventListener("pointerdown", function (ev) {
+    if (document.activeElement !== els.code) return;
+    ev.preventDefault();
+    insertIndent();
+  });
+  els.indentBtn.addEventListener("click", function (ev) {
+    if (document.activeElement === els.code) {
+      ev.preventDefault();
+      return;
+    }
     insertIndentAndKeepFocus();
   });
-  els.indentChip.addEventListener("pointerdown", insertIndentAndKeepFocus);
 
   els.code.addEventListener("keydown", function (ev) {
     var typing = tokenBeforeCursor().text;
@@ -1118,17 +1126,37 @@
 
   els.checkBtn.addEventListener("click", function () {
     checkCode();
+    revealWorld(els.console);
   });
 
   els.runBtn.addEventListener("click", function () {
-    if (!prepareRun()) return;
+    var ok = prepareRun();
+    if (!ok) {
+      revealWorld(els.console);
+      return;
+    }
+    if (isPhoneLayout()) {
+      els.code.blur();
+      setTimeout(function () {
+        if (els.gridStage.scrollIntoView) {
+          els.gridStage.scrollIntoView({ block: "center", behavior: "smooth" });
+        }
+        renderGrid();
+        play();
+      }, 80);
+      return;
+    }
     play();
   });
 
   els.stepBtn.addEventListener("click", function () {
     if (!state.events.length || state.index >= state.events.length) {
-      if (!prepareRun()) return;
+      if (!prepareRun()) {
+        revealWorld(els.console);
+        return;
+      }
     }
+    revealWorld(els.gridStage);
     state.running = true;
     stepOnce();
     if (state.index >= state.events.length) state.running = false;
@@ -1138,6 +1166,7 @@
     resetWorld();
     clearConsole();
     setStatus("Zurückgesetzt. Der Roboter steht wieder am Start. Der Parcours bleibt.");
+    revealWorld(els.gridStage);
   });
 
   els.cols.addEventListener("change", function () {
@@ -1155,37 +1184,58 @@
     resetWorld();
   });
 
+  function isPhoneLayout() {
+    return window.matchMedia("(max-width: 720px)").matches;
+  }
+
+  function revealWorld(target) {
+    if (!isPhoneLayout()) return;
+    els.code.blur();
+    setTimeout(function () {
+      if (target && target.scrollIntoView) {
+        target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+      renderGrid();
+    }, 80);
+  }
+
   var dockFrame = 0;
   function placeEditorDock() {
-    var bar = els.completionsBar;
-    var mobile = window.matchMedia("(max-width: 720px)").matches;
-    var editing = mobile && document.activeElement === els.code;
+    var dock = els.editorDock;
+    var phone = isPhoneLayout();
+    var editing = phone && document.activeElement === els.code;
     document.body.classList.toggle("is-editing", editing);
-    if (!bar) return;
-    if (!editing) {
-      bar.style.position = "";
-      bar.style.top = "";
-      bar.style.bottom = "";
-      bar.style.left = "";
-      bar.style.width = "";
-      bar.style.right = "";
+    if (!dock) return;
+    if (!phone) {
+      dock.style.position = "";
+      dock.style.top = "";
+      dock.style.bottom = "";
+      dock.style.left = "";
+      dock.style.width = "";
+      dock.style.right = "";
       document.body.style.removeProperty("--dock-h");
+      document.body.style.removeProperty("--vv-height");
+      document.body.style.removeProperty("--vv-offset");
       return;
     }
     var vv = window.visualViewport;
-    var height = bar.offsetHeight || 52;
+    var height = dock.offsetHeight || 96;
     document.body.style.setProperty("--dock-h", height + "px");
-    bar.style.position = "fixed";
-    bar.style.bottom = "auto";
-    bar.style.right = "auto";
+    dock.style.position = "fixed";
+    dock.style.bottom = "auto";
+    dock.style.right = "auto";
     if (vv) {
-      bar.style.left = vv.offsetLeft + "px";
-      bar.style.width = vv.width + "px";
-      bar.style.top = vv.offsetTop + vv.height - height + "px";
+      dock.style.left = vv.offsetLeft + "px";
+      dock.style.width = vv.width + "px";
+      dock.style.top = vv.offsetTop + vv.height - height + "px";
+      document.body.style.setProperty("--vv-height", vv.height + "px");
+      document.body.style.setProperty("--vv-offset", vv.offsetTop + "px");
     } else {
-      bar.style.left = "0";
-      bar.style.width = "100%";
-      bar.style.top = window.innerHeight - height + "px";
+      dock.style.left = "0";
+      dock.style.width = "100%";
+      dock.style.top = window.innerHeight - height + "px";
+      document.body.style.setProperty("--vv-height", window.innerHeight + "px");
+      document.body.style.setProperty("--vv-offset", "0px");
     }
   }
 

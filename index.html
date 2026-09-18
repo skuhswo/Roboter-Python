@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-title" content="Roboter-Python">
   <meta name="theme-color" content="#f3efe4">
   <title>Roboter-Python</title>
-  <link rel="stylesheet" href="style.css?v=0.6">
+  <link rel="stylesheet" href="style.css?v=0.7">
 </head>
 <body>
   <header class="app-header">
@@ -15,7 +15,7 @@
       <h1>Roboter-Python</h1>
       <p>Schreibe kleines Python und steuere den Roboter über das Spielfeld.</p>
     </div>
-    <span class="app-version" title="Programmversion">v0.6</span>
+    <span class="app-version" title="Programmversion">v0.7</span>
   </header>
 
   <main class="layout">
@@ -25,16 +25,6 @@
         <button type="button" id="newBtn">Neues Programm</button>
         <button type="button" id="deleteBtn" hidden>Löschen</button>
       </div>
-      <div class="toolbar toolbar-run">
-        <button class="primary" id="runBtn">Ausführen</button>
-        <button id="stepBtn">Schritt</button>
-        <button id="indentBtn" type="button" title="Vier Leerzeichen einrücken">Einrücken</button>
-        <button id="checkBtn">Syntax</button>
-        <button id="resetBtn">Reset</button>
-        <label class="speed">Tempo
-          <input type="range" id="speed" min="40" max="700" value="220">
-        </label>
-      </div>
       <div class="editor-wrap">
         <div class="gutter" id="gutter"></div>
         <div class="editor-stack" id="editorStack">
@@ -42,9 +32,20 @@
           <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" enterkeyhint="enter"></textarea>
         </div>
       </div>
-      <div class="completions-bar" id="completionsBar">
-        <button type="button" class="indent-chip" id="indentChip" tabindex="-1" title="Vier Leerzeichen einrücken">Einrücken</button>
-        <div class="completions" id="completions" aria-label="Befehlsvorschläge"></div>
+      <div class="editor-dock" id="editorDock">
+        <div class="completions-bar" id="completionsBar">
+          <div class="completions" id="completions" aria-label="Befehlsvorschläge"></div>
+        </div>
+        <div class="toolbar toolbar-run">
+          <button class="primary" id="runBtn">Ausführen</button>
+          <button id="stepBtn">Schritt</button>
+          <button id="indentBtn" type="button" title="Vier Leerzeichen einrücken">Einrücken</button>
+          <button id="checkBtn">Syntax</button>
+          <button id="resetBtn">Reset</button>
+          <label class="speed">Tempo
+            <input type="range" id="speed" min="40" max="700" value="220">
+          </label>
+        </div>
       </div>
       <div class="console" id="console"></div>
     </section>
@@ -88,7 +89,7 @@
     </section>
   </main>
 
-  <script src="interpreter.js?v=0.6"></script>
-  <script src="app.js?v=0.6"></script>
+  <script src="interpreter.js?v=0.7"></script>
+  <script src="app.js?v=0.7"></script>
 </body>
 </html>

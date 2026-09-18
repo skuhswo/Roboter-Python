@@ -968,11 +968,16 @@
     syncEditor();
     scheduleSave();
     updateCompletions();
+    scrollCaretIntoView();
   });
-  els.code.addEventListener("click", updateCompletions);
-  els.code.addEventListener("keyup", function (ev) {
-    if (ev.key === "ArrowDown" || ev.key === "ArrowUp" || ev.key === "Enter" || ev.key === "Escape") return;
+  els.code.addEventListener("click", function () {
     updateCompletions();
+    scrollCaretIntoView();
+  });
+  els.code.addEventListener("keyup", function (ev) {
+    if (ev.key === "Escape") return;
+    if (ev.key !== "ArrowDown" && ev.key !== "ArrowUp") updateCompletions();
+    scrollCaretIntoView();
   });
   els.code.addEventListener("scroll", function () {
     els.highlight.style.transform = "translate(" + -els.code.scrollLeft + "px," + -els.code.scrollTop + "px)";
@@ -1076,6 +1081,7 @@
     scheduleSave();
     els.code.focus();
     updateCompletions();
+    scrollCaretIntoView();
   }
 
   function insertIndent() {
@@ -1085,6 +1091,7 @@
     els.code.selectionStart = els.code.selectionEnd = start + 4;
     syncEditor();
     scheduleSave();
+    scrollCaretIntoView();
   }
 
   function insertIndentAndKeepFocus(ev) {
@@ -1225,12 +1232,37 @@
   }
 
   var dockFrame = 0;
+  function scrollCaretIntoView() {
+    var ta = els.code;
+    if (!ta) return;
+    var style = window.getComputedStyle(ta);
+    var lineHeight = parseFloat(style.lineHeight);
+    if (!lineHeight) lineHeight = parseFloat(style.fontSize) * 1.55;
+    var padTop = parseFloat(style.paddingTop) || 0;
+    var line = ta.value.slice(0, ta.selectionStart).split("\n").length;
+    var caretTop = padTop + (line - 1) * lineHeight;
+    var caretBot = caretTop + lineHeight;
+    var viewTop = ta.scrollTop;
+    var viewBot = viewTop + ta.clientHeight;
+    var margin = lineHeight;
+    if (caretTop < viewTop + margin) {
+      ta.scrollTop = Math.max(0, caretTop - margin);
+    } else if (caretBot > viewBot - margin) {
+      ta.scrollTop = caretBot - ta.clientHeight + margin;
+    }
+  }
+
   function placeEditorDock() {
     var dock = els.editorDock;
     var phone = isPhoneLayout();
     var editing = phone && document.activeElement === els.code;
     document.body.classList.toggle("is-editing", editing);
     if (!dock) return;
+    var vv = window.visualViewport;
+    if (vv) {
+      document.body.style.setProperty("--vv-height", vv.height + "px");
+      document.body.style.setProperty("--vv-offset", vv.offsetTop + "px");
+    }
     if (!phone) {
       dock.style.position = "";
       dock.style.top = "";
@@ -1243,7 +1275,17 @@
       document.body.style.removeProperty("--vv-offset");
       return;
     }
-    var vv = window.visualViewport;
+    if (editing) {
+      dock.style.position = "";
+      dock.style.top = "";
+      dock.style.bottom = "";
+      dock.style.left = "";
+      dock.style.width = "";
+      dock.style.right = "";
+      document.body.style.setProperty("--dock-h", (dock.offsetHeight || 96) + "px");
+      scrollCaretIntoView();
+      return;
+    }
     var height = dock.offsetHeight || 96;
     document.body.style.setProperty("--dock-h", height + "px");
     dock.style.position = "fixed";
@@ -1253,8 +1295,6 @@
       dock.style.left = vv.offsetLeft + "px";
       dock.style.width = vv.width + "px";
       dock.style.top = vv.offsetTop + vv.height - height + "px";
-      document.body.style.setProperty("--vv-height", vv.height + "px");
-      document.body.style.setProperty("--vv-offset", vv.offsetTop + "px");
     } else {
       dock.style.left = "0";
       dock.style.width = "100%";

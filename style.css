@@ -601,6 +601,8 @@ textarea {
   }
 
   body.is-editing {
+    display: flex;
+    flex-direction: column;
     position: fixed;
     top: var(--vv-offset, 0px);
     left: 0;
@@ -618,9 +620,12 @@ textarea {
   }
 
   body.is-editing .layout {
-    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
     min-height: 0;
-    padding: 0 0 var(--dock-h, 96px);
+    height: auto;
+    padding: 0;
     gap: 0;
   }
 
@@ -633,13 +638,37 @@ textarea {
   }
 
   body.is-editing .editor-wrap {
-    flex: 1;
+    flex: 1 1 auto;
     height: auto;
     min-height: 0;
+    overflow: hidden;
+  }
+
+  body.is-editing .gutter,
+  body.is-editing .editor-stack {
+    height: 100%;
+    min-height: 0;
+  }
+
+  body.is-editing .editor-stack {
+    overflow: hidden;
+  }
+
+  body.is-editing .editor-dock {
+    position: static;
+    flex: 0 0 auto;
+    width: 100%;
+    box-shadow: none;
   }
 
   body.is-editing textarea {
     min-height: 0;
+    height: 100%;
+  }
+
+  body.is-editing .highlight,
+  body.is-editing textarea {
+    padding-bottom: 28px;
   }
 
   .console {

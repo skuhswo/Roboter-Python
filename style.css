@@ -24,9 +24,15 @@
 
 * { box-sizing: border-box; }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 html, body {
   margin: 0;
   min-height: 100%;
+  min-height: 100dvh;
   background:
     radial-gradient(1200px 500px at 10% -10%, #fff8e8 0%, transparent 50%),
     var(--paper);
@@ -37,6 +43,9 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 .app-header {
@@ -45,6 +54,7 @@ body {
   justify-content: space-between;
   gap: 16px;
   padding: 18px 24px 8px;
+  padding-top: calc(18px + env(safe-area-inset-top));
 }
 
 .app-header h1 {
@@ -96,6 +106,8 @@ select, button, input[type="number"] {
   background: white;
   color: inherit;
   padding: 8px 12px;
+  min-height: 40px;
+  touch-action: manipulation;
 }
 
 .editor-panel select,
@@ -107,7 +119,14 @@ select, button, input[type="number"] {
 }
 
 .editor-panel select {
-  max-width: 240px;
+  max-width: min(240px, 100%);
+  flex: 1 1 160px;
+}
+
+.editor-panel button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
 }
 
 .grid.tool-mark {
@@ -334,7 +353,7 @@ textarea {
 .cell.marked::after {
   content: "";
   position: absolute;
-  inset: 10px;
+  inset: 18%;
   background: var(--mark);
   border-radius: 3px;
   opacity: 0.85;
@@ -372,14 +391,15 @@ textarea {
 }
 
 .robot-body {
-  width: 30px;
-  height: 30px;
+  width: 72%;
+  height: 72%;
   border: 2px solid #1d2734;
   border-radius: 50%;
   background: #fff;
   display: grid;
   place-items: center;
   font-weight: 800;
+  font-size: calc(var(--cell) * 0.4);
   box-shadow: 0 2px 0 #1d2734;
 }
 
@@ -409,6 +429,85 @@ textarea {
 .help details summary { cursor: pointer; font-weight: 650; color: var(--paper-ink); }
 
 @media (max-width: 980px) {
-  .layout { grid-template-columns: 1fr; }
-  :root { --cell: 32px; }
+  .layout {
+    grid-template-columns: 1fr;
+    padding: 8px 12px 16px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-header {
+    padding: 10px 12px 6px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+  }
+
+  .app-header h1 { font-size: 1.15rem; }
+  .app-header p { font-size: 0.88rem; }
+
+  .layout {
+    padding: 6px 10px 88px;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+
+  .toolbar {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .toolbar-run {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    background: #151b27;
+    border-top: 1px solid #364256;
+    padding: 8px 10px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .toolbar-run .speed {
+    margin-left: 0;
+    flex: 1 1 100%;
+  }
+
+  select, button, input[type="number"] {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .world-toolbar input[type="number"] { width: 72px; }
+
+  .gutter, .editor-stack, textarea, .highlight {
+    font-size: 16px;
+  }
+
+  .editor-wrap {
+    min-height: 180px;
+    height: 34dvh;
+    flex: 0 0 auto;
+  }
+
+  textarea { min-height: 180px; }
+
+  .console {
+    min-height: 64px;
+    max-height: 28vw;
+    font-size: 14px;
+  }
+
+  .grid-stage {
+    min-height: 220px;
+    padding: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tool-group .tool {
+    min-height: 44px;
+    padding: 8px 16px;
+  }
+
+  .help { font-size: 0.9rem; }
 }

@@ -2,7 +2,10 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Roboter-Python">
+  <meta name="theme-color" content="#f3efe4">
   <title>Roboter-Python</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -16,14 +19,17 @@
 
   <main class="layout">
     <section class="panel editor-panel">
-      <div class="toolbar">
+      <div class="toolbar toolbar-select">
         <select id="examples" aria-label="Programm laden"></select>
         <button type="button" id="newBtn">Neues Programm</button>
         <button type="button" id="deleteBtn" hidden>Löschen</button>
+      </div>
+      <div class="toolbar toolbar-run">
         <button class="primary" id="runBtn">Ausführen</button>
         <button id="stepBtn">Schritt</button>
-        <button id="checkBtn">Syntax prüfen</button>
-        <button id="resetBtn">Zurücksetzen</button>
+        <button id="indentBtn" type="button" title="Vier Leerzeichen einrücken">Einrücken</button>
+        <button id="checkBtn">Syntax</button>
+        <button id="resetBtn">Reset</button>
         <label class="speed">Tempo
           <input type="range" id="speed" min="40" max="700" value="220">
         </label>
@@ -32,13 +38,13 @@
         <div class="gutter" id="gutter"></div>
         <div class="editor-stack" id="editorStack">
           <pre class="highlight" id="highlight" aria-hidden="true"></pre>
-          <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+          <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" enterkeyhint="enter"></textarea>
         </div>
       </div>
       <div class="console" id="console"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel world-panel">
       <div class="world-toolbar">
         <label>Spalten <input type="number" id="cols" min="4" max="30" value="15"></label>
         <label>Zeilen <input type="number" id="rows" min="4" max="20" value="8"></label>
@@ -49,7 +55,7 @@
         </span>
         <button type="button" id="clearMarksBtn">Marken löschen</button>
       </div>
-      <div class="grid-stage">
+      <div class="grid-stage" id="gridStage">
         <div class="grid-wrap" id="gridWrap">
           <div class="grid" id="grid"></div>
           <svg class="path-svg" id="pathSvg"></svg>
@@ -58,7 +64,7 @@
       </div>
       <div class="status" id="status">Klicke ins Spielfeld, um die Startposition zu setzen.</div>
       <div class="help">
-        <details open>
+        <details id="helpBox">
           <summary>Befehle</summary>
           <p>
             Bewegung: <code>oben()</code> <code>unten()</code> <code>links()</code> <code>rechts()</code><br>

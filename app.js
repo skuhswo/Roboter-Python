@@ -215,6 +215,7 @@
     runBtn: document.getElementById("runBtn"),
     stepBtn: document.getElementById("stepBtn"),
     checkBtn: document.getElementById("checkBtn"),
+    indentBtn: document.getElementById("indentBtn"),
     resetBtn: document.getElementById("resetBtn"),
     speed: document.getElementById("speed"),
     console: document.getElementById("console"),
@@ -225,6 +226,7 @@
     toolMark: document.getElementById("toolMark"),
     clearMarksBtn: document.getElementById("clearMarksBtn"),
     grid: document.getElementById("grid"),
+    gridStage: document.getElementById("gridStage"),
     gridWrap: document.getElementById("gridWrap"),
     pathSvg: document.getElementById("pathSvg"),
     robot: document.getElementById("robot"),
@@ -497,9 +499,18 @@
   }
 
   function cellSize() {
+    var desktop = 42;
+    var min = 26;
+    var max = desktop;
+    if (window.matchMedia("(max-width: 720px)").matches) max = 34;
+    var stage = els.gridStage;
+    if (stage && stage.clientWidth > 40) {
+      var fit = Math.floor((stage.clientWidth - 8) / state.cols);
+      if (fit > 0) return Math.max(min, Math.min(max, fit));
+    }
     var raw = getComputedStyle(document.documentElement).getPropertyValue("--cell");
     var n = parseFloat(raw);
-    return n > 0 ? n : 42;
+    return n > 0 ? n : desktop;
   }
 
   function setStatus(text, kind) {
@@ -521,6 +532,7 @@
 
   function renderGrid() {
     var size = cellSize();
+    document.documentElement.style.setProperty("--cell", size + "px");
     els.grid.style.gridTemplateColumns = "repeat(" + state.cols + ", " + size + "px)";
     els.grid.style.gridTemplateRows = "repeat(" + state.rows + ", " + size + "px)";
     els.grid.classList.toggle("tool-mark", state.tool === "mark");
@@ -910,14 +922,24 @@
     els.gutter.scrollTop = els.editorStack.scrollTop;
   });
 
+  function insertIndent() {
+    var start = els.code.selectionStart;
+    var end = els.code.selectionEnd;
+    els.code.value = els.code.value.slice(0, start) + "    " + els.code.value.slice(end);
+    els.code.selectionStart = els.code.selectionEnd = start + 4;
+    syncEditor();
+    scheduleSave();
+  }
+
+  els.indentBtn.addEventListener("click", function () {
+    insertIndent();
+    els.code.focus();
+  });
+
   els.code.addEventListener("keydown", function (ev) {
     if (ev.key === "Tab") {
       ev.preventDefault();
-      var start = els.code.selectionStart;
-      var end = els.code.selectionEnd;
-      els.code.value = els.code.value.slice(0, start) + "    " + els.code.value.slice(end);
-      els.code.selectionStart = els.code.selectionEnd = start + 4;
-      syncEditor();
+      insertIndent();
     }
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "Enter") {
       ev.preventDefault();
@@ -967,6 +989,16 @@
   window.addEventListener("resize", function () {
     renderGrid();
   });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", function () {
+      renderGrid();
+    });
+  }
+
+  if (window.matchMedia("(min-width: 721px)").matches) {
+    var help = document.getElementById("helpBox");
+    if (help) help.setAttribute("open", "");
+  }
 
   loadExample(AUFGABEN[0]);
 })();

@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Roboter-Python">
   <meta name="theme-color" content="#f3efe4">
@@ -41,7 +41,10 @@
           <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" enterkeyhint="enter"></textarea>
         </div>
       </div>
-      <div class="completions" id="completions" aria-label="Befehlsvorschläge"></div>
+      <div class="completions-bar" id="completionsBar">
+        <button type="button" class="indent-chip" id="indentChip" tabindex="-1" title="Vier Leerzeichen einrücken">Einrücken</button>
+        <div class="completions" id="completions" aria-label="Befehlsvorschläge"></div>
+      </div>
       <div class="console" id="console"></div>
     </section>
 

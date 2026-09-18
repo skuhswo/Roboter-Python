@@ -257,8 +257,10 @@
     stepBtn: document.getElementById("stepBtn"),
     checkBtn: document.getElementById("checkBtn"),
     indentBtn: document.getElementById("indentBtn"),
+    indentChip: document.getElementById("indentChip"),
     resetBtn: document.getElementById("resetBtn"),
     speed: document.getElementById("speed"),
+    completionsBar: document.getElementById("completionsBar"),
     completions: document.getElementById("completions"),
     console: document.getElementById("console"),
     cols: document.getElementById("cols"),
@@ -1009,14 +1011,16 @@
     items.forEach(function (item, i) {
       var btn = document.createElement("button");
       btn.type = "button";
+      btn.tabIndex = -1;
       btn.textContent = item.label;
       if (i === state.completionIndex) btn.className = "active";
-      btn.addEventListener("mousedown", function (ev) {
+      btn.addEventListener("pointerdown", function (ev) {
         ev.preventDefault();
         applyCompletion(item);
       });
       els.completions.appendChild(btn);
     });
+    syncEditorDock();
   }
 
   function updateCompletions() {
@@ -1058,10 +1062,16 @@
     scheduleSave();
   }
 
-  els.indentBtn.addEventListener("click", function () {
+  function insertIndentAndKeepFocus(ev) {
+    if (ev) ev.preventDefault();
     insertIndent();
     els.code.focus();
+  }
+
+  els.indentBtn.addEventListener("click", function () {
+    insertIndentAndKeepFocus();
   });
+  els.indentChip.addEventListener("pointerdown", insertIndentAndKeepFocus);
 
   els.code.addEventListener("keydown", function (ev) {
     var typing = tokenBeforeCursor().text;
@@ -1145,13 +1155,63 @@
     resetWorld();
   });
 
+  var dockFrame = 0;
+  function placeEditorDock() {
+    var bar = els.completionsBar;
+    var mobile = window.matchMedia("(max-width: 720px)").matches;
+    var editing = mobile && document.activeElement === els.code;
+    document.body.classList.toggle("is-editing", editing);
+    if (!bar) return;
+    if (!editing) {
+      bar.style.position = "";
+      bar.style.top = "";
+      bar.style.bottom = "";
+      bar.style.left = "";
+      bar.style.width = "";
+      bar.style.right = "";
+      document.body.style.removeProperty("--dock-h");
+      return;
+    }
+    var vv = window.visualViewport;
+    var height = bar.offsetHeight || 52;
+    document.body.style.setProperty("--dock-h", height + "px");
+    bar.style.position = "fixed";
+    bar.style.bottom = "auto";
+    bar.style.right = "auto";
+    if (vv) {
+      bar.style.left = vv.offsetLeft + "px";
+      bar.style.width = vv.width + "px";
+      bar.style.top = vv.offsetTop + vv.height - height + "px";
+    } else {
+      bar.style.left = "0";
+      bar.style.width = "100%";
+      bar.style.top = window.innerHeight - height + "px";
+    }
+  }
+
+  function syncEditorDock() {
+    if (dockFrame) return;
+    dockFrame = requestAnimationFrame(function () {
+      dockFrame = 0;
+      placeEditorDock();
+      requestAnimationFrame(placeEditorDock);
+    });
+  }
+
+  els.code.addEventListener("focus", syncEditorDock);
+  els.code.addEventListener("blur", function () {
+    setTimeout(syncEditorDock, 40);
+  });
   window.addEventListener("resize", function () {
     renderGrid();
+    syncEditorDock();
   });
   if (window.visualViewport) {
     window.visualViewport.addEventListener("resize", function () {
       renderGrid();
+      syncEditorDock();
     });
+    window.visualViewport.addEventListener("scroll", syncEditorDock);
   }
 
   if (window.matchMedia("(min-width: 721px)").matches) {

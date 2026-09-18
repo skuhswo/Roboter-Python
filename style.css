@@ -70,6 +70,20 @@ body {
   font-size: 0.95rem;
 }
 
+.app-version {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #efe8da;
+  color: #5b6777;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
 .layout {
   flex: 1;
   display: grid;

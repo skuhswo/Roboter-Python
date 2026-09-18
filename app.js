@@ -204,6 +204,47 @@
   var KW = /^(for|in|while|if|elif|else|and|or|not|True|False|pass|def|return|break)$/;
   var FNS = /^(oben|unten|links|rechts|print|range|marke_setzen|marke_entfernen|ist_marke|ist_marke_oben|ist_marke_unten|ist_marke_links|ist_marke_rechts|frei_oben|frei_unten|frei_links|frei_rechts|am_rand|am_rand_oben|am_rand_unten|am_rand_links|am_rand_rechts|spalte|zeile|int|str|len|abs)$/;
 
+  var COMPLETIONS = [
+    { label: "oben()", insert: "oben()", pin: true },
+    { label: "unten()", insert: "unten()", pin: true },
+    { label: "links()", insert: "links()", pin: true },
+    { label: "rechts()", insert: "rechts()", pin: true },
+    { label: "for i in range()", insert: "for i in range(|):", pin: true },
+    { label: "while", insert: "while |:", pin: true },
+    { label: "if", insert: "if |:", pin: true },
+    { label: "marke_setzen()", insert: "marke_setzen()", pin: true },
+    { label: "ist_marke()", insert: "ist_marke()", pin: true },
+    { label: "am_rand()", insert: "am_rand()", pin: true },
+    { label: "print()", insert: "print(|)", pin: true },
+    { label: "marke_entfernen()", insert: "marke_entfernen()" },
+    { label: "ist_marke_oben()", insert: "ist_marke_oben()" },
+    { label: "ist_marke_unten()", insert: "ist_marke_unten()" },
+    { label: "ist_marke_links()", insert: "ist_marke_links()" },
+    { label: "ist_marke_rechts()", insert: "ist_marke_rechts()" },
+    { label: "frei_oben()", insert: "frei_oben()" },
+    { label: "frei_unten()", insert: "frei_unten()" },
+    { label: "frei_links()", insert: "frei_links()" },
+    { label: "frei_rechts()", insert: "frei_rechts()" },
+    { label: "am_rand_oben()", insert: "am_rand_oben()" },
+    { label: "am_rand_unten()", insert: "am_rand_unten()" },
+    { label: "am_rand_links()", insert: "am_rand_links()" },
+    { label: "am_rand_rechts()", insert: "am_rand_rechts()" },
+    { label: "spalte()", insert: "spalte()" },
+    { label: "zeile()", insert: "zeile()" },
+    { label: "range()", insert: "range(|)" },
+    { label: "elif", insert: "elif |:" },
+    { label: "else", insert: "else:" },
+    { label: "def", insert: "def |():" },
+    { label: "not", insert: "not " },
+    { label: "and", insert: "and " },
+    { label: "or", insert: "or " },
+    { label: "True", insert: "True" },
+    { label: "False", insert: "False" },
+    { label: "break", insert: "break" },
+    { label: "pass", insert: "pass" },
+    { label: "return", insert: "return " },
+  ];
+
   var els = {
     examples: document.getElementById("examples"),
     newBtn: document.getElementById("newBtn"),
@@ -218,6 +259,7 @@
     indentBtn: document.getElementById("indentBtn"),
     resetBtn: document.getElementById("resetBtn"),
     speed: document.getElementById("speed"),
+    completions: document.getElementById("completions"),
     console: document.getElementById("console"),
     cols: document.getElementById("cols"),
     rows: document.getElementById("rows"),
@@ -253,6 +295,8 @@
     activeLine: 0,
     errorLines: [],
     running: false,
+    completionIndex: -1,
+    completionItems: [],
   };
 
   var userPrograms = loadUserPrograms();
@@ -820,6 +864,7 @@
     clearConsole();
     setStatus(ex.hint || "Programm geladen. Starte mit Ausführen oder gehe Schritt für Schritt.");
     syncEditor();
+    updateCompletions();
   }
 
   function createNewProgram() {
@@ -907,12 +952,15 @@
 
   els.code.addEventListener("input", function () {
     if (state.errorLines.length) state.errorLines = [];
+    state.completionIndex = -1;
     syncEditor();
     scheduleSave();
+    updateCompletions();
   });
-  els.code.addEventListener("change", function () {
-    syncEditor();
-    snapshotCurrent();
+  els.code.addEventListener("click", updateCompletions);
+  els.code.addEventListener("keyup", function (ev) {
+    if (ev.key === "ArrowDown" || ev.key === "ArrowUp" || ev.key === "Enter" || ev.key === "Escape") return;
+    updateCompletions();
   });
   els.code.addEventListener("scroll", function () {
     els.highlight.style.transform = "translate(" + -els.code.scrollLeft + "px," + -els.code.scrollTop + "px)";
@@ -921,6 +969,85 @@
   els.editorStack.addEventListener("scroll", function () {
     els.gutter.scrollTop = els.editorStack.scrollTop;
   });
+
+  function tokenBeforeCursor() {
+    var pos = els.code.selectionStart;
+    var value = els.code.value;
+    var before = value.slice(0, pos);
+    var lineStart = before.lastIndexOf("\n") + 1;
+    var line = before.slice(lineStart);
+    if (/^\s*#/.test(line)) return { start: pos, text: "", skip: true };
+    var hashes = (line.match(/"/g) || []).length;
+    var quotes = (line.match(/'/g) || []).length;
+    if (hashes % 2 === 1 || quotes % 2 === 1) return { start: pos, text: "", skip: true };
+    var m = line.match(/[A-Za-z_][A-Za-z0-9_]*$/);
+    if (!m) return { start: pos, text: "" };
+    return { start: lineStart + line.length - m[0].length, text: m[0] };
+  }
+
+  function filterCompletions(query) {
+    var q = (query || "").toLowerCase();
+    var items = COMPLETIONS.filter(function (item) {
+      if (!q) return !!item.pin;
+      var label = item.label.toLowerCase();
+      var insert = item.insert.replace("|", "").toLowerCase();
+      return label.indexOf(q) === 0 || insert.indexOf(q) === 0 || label.indexOf(q) !== -1;
+    });
+    items.sort(function (a, b) {
+      if (!q) return 0;
+      var ap = a.label.toLowerCase().indexOf(q) === 0 ? 0 : 1;
+      var bp = b.label.toLowerCase().indexOf(q) === 0 ? 0 : 1;
+      if (ap !== bp) return ap - bp;
+      return a.label.length - b.label.length;
+    });
+    return items.slice(0, 12);
+  }
+
+  function renderCompletions() {
+    var items = state.completionItems;
+    els.completions.innerHTML = "";
+    items.forEach(function (item, i) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = item.label;
+      if (i === state.completionIndex) btn.className = "active";
+      btn.addEventListener("mousedown", function (ev) {
+        ev.preventDefault();
+        applyCompletion(item);
+      });
+      els.completions.appendChild(btn);
+    });
+  }
+
+  function updateCompletions() {
+    var tok = tokenBeforeCursor();
+    if (tok.skip) {
+      state.completionItems = COMPLETIONS.filter(function (item) {
+        return item.pin;
+      }).slice(0, 12);
+    } else {
+      state.completionItems = filterCompletions(tok.text);
+    }
+    if (state.completionIndex >= state.completionItems.length) state.completionIndex = -1;
+    renderCompletions();
+  }
+
+  function applyCompletion(item) {
+    var pos = els.code.selectionStart;
+    var tok = tokenBeforeCursor();
+    var raw = item.insert;
+    var caret = raw.indexOf("|");
+    var text = raw.replace("|", "");
+    var from = tok.skip ? pos : tok.start;
+    els.code.value = els.code.value.slice(0, from) + text + els.code.value.slice(pos);
+    var newPos = from + (caret === -1 ? text.length : caret);
+    els.code.selectionStart = els.code.selectionEnd = newPos;
+    if (state.errorLines.length) state.errorLines = [];
+    syncEditor();
+    scheduleSave();
+    els.code.focus();
+    updateCompletions();
+  }
 
   function insertIndent() {
     var start = els.code.selectionStart;
@@ -937,8 +1064,40 @@
   });
 
   els.code.addEventListener("keydown", function (ev) {
+    var typing = tokenBeforeCursor().text;
+    var navigating = state.completionIndex >= 0;
+    if (ev.key === "ArrowDown" && state.completionItems.length && (typing || navigating)) {
+      ev.preventDefault();
+      state.completionIndex = (state.completionIndex + 1) % state.completionItems.length;
+      renderCompletions();
+      return;
+    }
+    if (ev.key === "ArrowUp" && state.completionItems.length && (typing || navigating)) {
+      ev.preventDefault();
+      state.completionIndex =
+        state.completionIndex <= 0 ? state.completionItems.length - 1 : state.completionIndex - 1;
+      renderCompletions();
+      return;
+    }
+    if (ev.key === "Escape") {
+      state.completionIndex = -1;
+      renderCompletions();
+      return;
+    }
+    if (ev.key === "Enter" && !ev.shiftKey && state.completionIndex >= 0) {
+      ev.preventDefault();
+      applyCompletion(state.completionItems[state.completionIndex]);
+      state.completionIndex = -1;
+      return;
+    }
     if (ev.key === "Tab") {
       ev.preventDefault();
+      if (state.completionItems.length && tokenBeforeCursor().text) {
+        var pick = state.completionIndex >= 0 ? state.completionIndex : 0;
+        applyCompletion(state.completionItems[pick]);
+        state.completionIndex = -1;
+        return;
+      }
       insertIndent();
     }
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "Enter") {

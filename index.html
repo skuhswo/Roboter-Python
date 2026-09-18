@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roboter-Python</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>Roboter-Python</h1>
+      <p>Schreibe kleines Python und steuere den Roboter über das Spielfeld.</p>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel editor-panel">
+      <div class="toolbar">
+        <select id="examples" aria-label="Programm laden"></select>
+        <button type="button" id="newBtn">Neues Programm</button>
+        <button type="button" id="deleteBtn" hidden>Löschen</button>
+        <button class="primary" id="runBtn">Ausführen</button>
+        <button id="stepBtn">Schritt</button>
+        <button id="checkBtn">Syntax prüfen</button>
+        <button id="resetBtn">Zurücksetzen</button>
+        <label class="speed">Tempo
+          <input type="range" id="speed" min="40" max="700" value="220">
+        </label>
+      </div>
+      <div class="editor-wrap">
+        <div class="gutter" id="gutter"></div>
+        <div class="editor-stack" id="editorStack">
+          <pre class="highlight" id="highlight" aria-hidden="true"></pre>
+          <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+        </div>
+      </div>
+      <div class="console" id="console"></div>
+    </section>
+
+    <section class="panel">
+      <div class="world-toolbar">
+        <label>Spalten <input type="number" id="cols" min="4" max="30" value="15"></label>
+        <label>Zeilen <input type="number" id="rows" min="4" max="20" value="8"></label>
+        <span id="startHint">Start: Zelle anklicken</span>
+        <span class="tool-group" role="group" aria-label="Werkzeug">
+          <button type="button" id="toolStart" class="tool active">Start</button>
+          <button type="button" id="toolMark" class="tool">Marken</button>
+        </span>
+        <button type="button" id="clearMarksBtn">Marken löschen</button>
+      </div>
+      <div class="grid-stage">
+        <div class="grid-wrap" id="gridWrap">
+          <div class="grid" id="grid"></div>
+          <svg class="path-svg" id="pathSvg"></svg>
+          <div class="robot" id="robot"><div class="robot-body">R</div></div>
+        </div>
+      </div>
+      <div class="status" id="status">Klicke ins Spielfeld, um die Startposition zu setzen.</div>
+      <div class="help">
+        <details open>
+          <summary>Befehle</summary>
+          <p>
+            Bewegung: <code>oben()</code> <code>unten()</code> <code>links()</code> <code>rechts()</code><br>
+            Marken: <code>marke_setzen()</code> <code>marke_entfernen()</code> <code>ist_marke()</code>
+            <code>ist_marke_oben()</code> <code>ist_marke_unten()</code> <code>ist_marke_links()</code> <code>ist_marke_rechts()</code><br>
+            Fühler: <code>frei_oben()</code> <code>frei_unten()</code> <code>frei_links()</code> <code>frei_rechts()</code><br>
+            Rand: <code>am_rand()</code> <code>am_rand_oben()</code> <code>am_rand_unten()</code> <code>am_rand_links()</code> <code>am_rand_rechts()</code><br>
+            Position: <code>spalte()</code> <code>zeile()</code> (zählen ab 1) · Ausgabe: <code>print(...)</code>
+          </p>
+          <p>Python: <code>for i in range(n):</code>, <code>while</code>, <code>if / elif / else</code>, <code>break</code>, Variablen, <code>def</code>.</p>
+          <p>Mit <strong>Syntax prüfen</strong> werden fehlende Doppelpunkte, Einrückungen und typische Verwechslungen (z.&nbsp;B. <code>if</code> statt <code>for</code>) markiert — inklusive Korrekturvorschlag.</p>
+          <p>Unter <strong>Aufgaben</strong> liegen vier Übungen: Zackenpfad, Rand, Parkour, alle Marken. Bei Parkour und Einsammeln darfst du den Parcours mit der Maus ändern — der Code soll trotzdem gelten.</p>
+          <p><strong>Neues Programm</strong> speichert eine eigene Lösung. <strong>Marken</strong>-Werkzeug: Parcours legen. <strong>Start</strong>-Werkzeug: Startposition setzen.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <script src="interpreter.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

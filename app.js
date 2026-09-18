@@ -952,6 +952,16 @@
     state.painting = false;
   });
 
+  var chipDrag = { x: 0, y: 0, moved: false, scrolling: false, timer: 0 };
+  els.completions.addEventListener("scroll", function () {
+    chipDrag.moved = true;
+    chipDrag.scrolling = true;
+    clearTimeout(chipDrag.timer);
+    chipDrag.timer = setTimeout(function () {
+      chipDrag.scrolling = false;
+    }, 160);
+  }, { passive: true });
+
   els.code.addEventListener("input", function () {
     if (state.errorLines.length) state.errorLines = [];
     state.completionIndex = -1;
@@ -1015,7 +1025,22 @@
       btn.textContent = item.label;
       if (i === state.completionIndex) btn.className = "active";
       btn.addEventListener("pointerdown", function (ev) {
+        chipDrag.x = ev.clientX;
+        chipDrag.y = ev.clientY;
+        chipDrag.moved = chipDrag.scrolling;
+        if (ev.pointerType === "mouse") ev.preventDefault();
+      });
+      btn.addEventListener("pointermove", function (ev) {
+        if (Math.abs(ev.clientX - chipDrag.x) > 12 || Math.abs(ev.clientY - chipDrag.y) > 12) {
+          chipDrag.moved = true;
+        }
+      });
+      btn.addEventListener("pointercancel", function () {
+        chipDrag.moved = true;
+      });
+      btn.addEventListener("click", function (ev) {
         ev.preventDefault();
+        if (chipDrag.moved || chipDrag.scrolling) return;
         applyCompletion(item);
       });
       els.completions.appendChild(btn);
